@@ -12,7 +12,7 @@ export interface ServerInfo {
   user?: string;
   private_key_uuid?: string;
   is_build_server?: boolean;
-  proxy_type?: 'traefik' | 'caddy' | 'none';
+  proxy_type?: string; // 'traefik' | 'caddy' | 'none'
   status: 'running' | 'stopped' | 'error';
   version: string;
   resources: {
@@ -94,7 +94,9 @@ export interface Deployment {
 
 // ============ APPLICATION TYPES ============
 
-export type BuildPack = 'nixpacks' | 'static' | 'dockerfile' | 'dockercompose';
+// BuildPack accepts any string to reduce MCP schema token usage
+// Common values: 'nixpacks' | 'static' | 'dockerfile' | 'dockercompose'
+export type BuildPack = string;
 
 export interface Application {
   id: number;
@@ -633,93 +635,10 @@ export interface CreateDragonflyRequest extends CreateDatabaseRequest {
 
 // ============ SERVICE TYPES ============
 
-export type ServiceType =
-  | 'activepieces'
-  | 'appsmith'
-  | 'appwrite'
-  | 'authentik'
-  | 'babybuddy'
-  | 'budge'
-  | 'changedetection'
-  | 'chatwoot'
-  | 'classicpress-with-mariadb'
-  | 'classicpress-with-mysql'
-  | 'classicpress-without-database'
-  | 'cloudflared'
-  | 'code-server'
-  | 'dashboard'
-  | 'directus'
-  | 'directus-with-postgresql'
-  | 'docker-registry'
-  | 'docuseal'
-  | 'docuseal-with-postgres'
-  | 'dokuwiki'
-  | 'duplicati'
-  | 'emby'
-  | 'embystat'
-  | 'fider'
-  | 'filebrowser'
-  | 'firefly'
-  | 'formbricks'
-  | 'ghost'
-  | 'gitea'
-  | 'gitea-with-mariadb'
-  | 'gitea-with-mysql'
-  | 'gitea-with-postgresql'
-  | 'glance'
-  | 'glances'
-  | 'glitchtip'
-  | 'grafana'
-  | 'grafana-with-postgresql'
-  | 'grocy'
-  | 'heimdall'
-  | 'homepage'
-  | 'jellyfin'
-  | 'kuzzle'
-  | 'listmonk'
-  | 'logto'
-  | 'mediawiki'
-  | 'meilisearch'
-  | 'metabase'
-  | 'metube'
-  | 'minio'
-  | 'moodle'
-  | 'n8n'
-  | 'n8n-with-postgresql'
-  | 'next-image-transformation'
-  | 'nextcloud'
-  | 'nocodb'
-  | 'odoo'
-  | 'openblocks'
-  | 'pairdrop'
-  | 'penpot'
-  | 'phpmyadmin'
-  | 'pocketbase'
-  | 'posthog'
-  | 'reactive-resume'
-  | 'rocketchat'
-  | 'shlink'
-  | 'slash'
-  | 'snapdrop'
-  | 'statusnook'
-  | 'stirling-pdf'
-  | 'supabase'
-  | 'syncthing'
-  | 'tolgee'
-  | 'trigger'
-  | 'trigger-with-external-database'
-  | 'twenty'
-  | 'umami'
-  | 'unleash-with-postgresql'
-  | 'unleash-without-database'
-  | 'uptime-kuma'
-  | 'vaultwarden'
-  | 'vikunja'
-  | 'weblate'
-  | 'whoogle'
-  | 'wordpress-with-mariadb'
-  | 'wordpress-with-mysql'
-  | 'wordpress-without-database';
+// ServiceType accepts any string to reduce MCP schema token usage
+// Common values: activepieces, appsmith, n8n, wordpress-with-mysql, penpot, etc.
+// See Coolify documentation for full list of available service types
+export type ServiceType = string;
 
 export interface Service {
   id: number;
@@ -768,7 +687,7 @@ export interface CreateServerRequest {
   private_key_uuid: string;
   is_build_server?: boolean;
   instant_validate?: boolean;
-  proxy_type?: 'traefik' | 'caddy' | 'none';
+  proxy_type?: string; // 'traefik' | 'caddy' | 'none'
 }
 
 export interface UpdateServerRequest {
@@ -780,7 +699,7 @@ export interface UpdateServerRequest {
   private_key_uuid?: string;
   is_build_server?: boolean;
   instant_validate?: boolean;
-  proxy_type?: 'traefik' | 'caddy' | 'none';
+  proxy_type?: string; // 'traefik' | 'caddy' | 'none'
 }
 
 // ============ PRIVATE KEY TYPES ============

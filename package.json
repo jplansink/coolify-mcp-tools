@@ -1,6 +1,6 @@
 {
   "name": "coolify-mcp-tools",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "MCP (Model Context Protocol) server for Coolify - manage your Coolify infrastructure through AI assistants",
   "mcpName": "io.github.jplansink/coolify-mcp-tools",
   "type": "module",
