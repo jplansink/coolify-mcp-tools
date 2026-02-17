@@ -6,6 +6,25 @@ import { z } from 'zod';
 
 const log = debug('coolify:mcp');
 
+function sanitizeOutput(data: unknown): unknown {
+  if (typeof data === 'string') {
+    return data.replace(/\0/g, '').slice(0, 4096);
+  }
+  if (Array.isArray(data)) return data.map(sanitizeOutput);
+  if (data !== null && typeof data === 'object') {
+    return Object.fromEntries(
+      Object.entries(data as Record<string, unknown>).map(([k, v]) => [k, sanitizeOutput(v)]),
+    );
+  }
+  return data;
+}
+
+function validateCommand(command: string): void {
+  if (/[;&|`$><\\]/.test(command)) {
+    throw new Error('Command contains unsupported characters');
+  }
+}
+
 // Service types list removed from schema to reduce token usage in MCP tool definitions.
 // The valid service types are documented in Coolify's API and should be referenced there.
 // Previously included: activepieces, appsmith, appwrite, authentik, n8n, wordpress-with-mysql, etc.
@@ -38,7 +57,7 @@ export class CoolifyMcpServer extends McpServer {
   constructor(config: { baseUrl: string; accessToken: string }) {
     super({
       name: 'coolify-mcp-tools',
-      version: '1.0.0',
+      version: '1.1.0',
     });
 
     log('Initializing server with config: %o', config);
@@ -113,10 +132,11 @@ export class CoolifyMcpServer extends McpServer {
       'Delete a Coolify server',
       {
         uuid: z.string(),
+        confirm: z.literal(true).describe('Must be set to true to confirm this destructive operation'),
       },
       async (args) => {
         const result = await this.client.deleteServer(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(result)) }] };
       },
     );
 
@@ -208,10 +228,11 @@ export class CoolifyMcpServer extends McpServer {
       'Delete a project',
       {
         uuid: z.string(),
+        confirm: z.literal(true).describe('Must be set to true to confirm this destructive operation'),
       },
       async (args) => {
         const result = await this.client.deleteProject(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(result)) }] };
       },
     );
 
@@ -264,13 +285,14 @@ export class CoolifyMcpServer extends McpServer {
       {
         project_uuid: z.string(),
         environment_name_or_uuid: z.string(),
+        confirm: z.literal(true).describe('Must be set to true to confirm this destructive operation'),
       },
       async (args) => {
         const result = await this.client.deleteProjectEnvironment(
           args.project_uuid,
           args.environment_name_or_uuid,
         );
-        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(result)) }] };
       },
     );
 
@@ -278,7 +300,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_applications', 'List all applications', {}, async () => {
       const apps = await this.client.listApplications();
-      return { content: [{ type: 'text', text: JSON.stringify(apps) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(apps)) }] };
     });
 
     this.tool(
@@ -289,7 +311,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const app = await this.client.getApplication(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(app) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(app)) }] };
       },
     );
 
@@ -459,15 +481,16 @@ export class CoolifyMcpServer extends McpServer {
       'Delete an application',
       {
         uuid: z.string(),
+        confirm: z.literal(true).describe('Must be set to true to confirm this destructive operation'),
         delete_configurations: z.boolean().optional(),
         delete_volumes: z.boolean().optional(),
         docker_cleanup: z.boolean().optional(),
         delete_connected_networks: z.boolean().optional(),
       },
       async (args) => {
-        const { uuid, ...options } = args;
+        const { uuid, confirm: _confirm, ...options } = args;
         const result = await this.client.deleteApplication(uuid, options);
-        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(result)) }] };
       },
     );
 
@@ -530,7 +553,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const logs = await this.client.getApplicationLogs(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(logs) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(logs)) }] };
       },
     );
 
@@ -542,8 +565,9 @@ export class CoolifyMcpServer extends McpServer {
         command: z.string().describe('Command to execute'),
       },
       async (args) => {
+        validateCommand(args.command);
         const result = await this.client.executeApplicationCommand(args.uuid, args.command);
-        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(result)) }] };
       },
     );
 
@@ -557,7 +581,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const envs = await this.client.listApplicationEnvs(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(envs) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(envs)) }] };
       },
     );
 
@@ -652,11 +676,12 @@ export class CoolifyMcpServer extends McpServer {
       'Delete a database',
       {
         uuid: z.string(),
+        confirm: z.literal(true).describe('Must be set to true to confirm this destructive operation'),
         options: z.object(deleteOptionsSchema).optional(),
       },
       async (args) => {
         const result = await this.client.deleteDatabase(args.uuid, args.options);
-        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(result)) }] };
       },
     );
 
@@ -984,11 +1009,12 @@ export class CoolifyMcpServer extends McpServer {
       'Delete a service',
       {
         uuid: z.string(),
+        confirm: z.literal(true).describe('Must be set to true to confirm this destructive operation'),
         options: z.object(deleteOptionsSchema).optional(),
       },
       async (args) => {
         const result = await this.client.deleteService(args.uuid, args.options);
-        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(result)) }] };
       },
     );
 
@@ -1038,7 +1064,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const envs = await this.client.listServiceEnvs(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(envs) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(envs)) }] };
       },
     );
 
@@ -1134,10 +1160,11 @@ export class CoolifyMcpServer extends McpServer {
       'Delete a private key',
       {
         uuid: z.string(),
+        confirm: z.literal(true).describe('Must be set to true to confirm this destructive operation'),
       },
       async (args) => {
         const result = await this.client.deletePrivateKey(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(result)) }] };
       },
     );
 
@@ -1209,10 +1236,11 @@ export class CoolifyMcpServer extends McpServer {
       'Delete a GitHub App integration',
       {
         id: z.number().describe('GitHub App ID in Coolify'),
+        confirm: z.literal(true).describe('Must be set to true to confirm this destructive operation'),
       },
       async (args) => {
         const result = await this.client.deleteGitHubApp(args.id);
-        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(result)) }] };
       },
     );
 
@@ -1367,10 +1395,17 @@ export class CoolifyMcpServer extends McpServer {
       return { content: [{ type: 'text', text: JSON.stringify(result) }] };
     });
 
-    this.tool('disable_api', 'Disable the Coolify API', {}, async () => {
-      const result = await this.client.disableApi();
-      return { content: [{ type: 'text', text: JSON.stringify(result) }] };
-    });
+    this.tool(
+      'disable_api',
+      'Disable the Coolify API',
+      {
+        confirm: z.literal(true).describe('Must be set to true to confirm this destructive operation'),
+      },
+      async () => {
+        const result = await this.client.disableApi();
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(result)) }] };
+      },
+    );
   }
 
   async connect(transport: Transport): Promise<void> {
