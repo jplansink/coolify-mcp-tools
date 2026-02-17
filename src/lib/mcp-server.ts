@@ -6,99 +6,13 @@ import { z } from 'zod';
 
 const log = debug('coolify:mcp');
 
-// Define valid service types
-const serviceTypes = [
-  'activepieces',
-  'appsmith',
-  'appwrite',
-  'authentik',
-  'babybuddy',
-  'budge',
-  'changedetection',
-  'chatwoot',
-  'classicpress-with-mariadb',
-  'classicpress-with-mysql',
-  'classicpress-without-database',
-  'cloudflared',
-  'code-server',
-  'dashboard',
-  'directus',
-  'directus-with-postgresql',
-  'docker-registry',
-  'docuseal',
-  'docuseal-with-postgres',
-  'dokuwiki',
-  'duplicati',
-  'emby',
-  'embystat',
-  'fider',
-  'filebrowser',
-  'firefly',
-  'formbricks',
-  'ghost',
-  'gitea',
-  'gitea-with-mariadb',
-  'gitea-with-mysql',
-  'gitea-with-postgresql',
-  'glance',
-  'glances',
-  'glitchtip',
-  'grafana',
-  'grafana-with-postgresql',
-  'grocy',
-  'heimdall',
-  'homepage',
-  'jellyfin',
-  'kuzzle',
-  'listmonk',
-  'logto',
-  'mediawiki',
-  'meilisearch',
-  'metabase',
-  'metube',
-  'minio',
-  'moodle',
-  'n8n',
-  'n8n-with-postgresql',
-  'next-image-transformation',
-  'nextcloud',
-  'nocodb',
-  'odoo',
-  'openblocks',
-  'pairdrop',
-  'penpot',
-  'phpmyadmin',
-  'pocketbase',
-  'posthog',
-  'reactive-resume',
-  'rocketchat',
-  'shlink',
-  'slash',
-  'snapdrop',
-  'statusnook',
-  'stirling-pdf',
-  'supabase',
-  'syncthing',
-  'tolgee',
-  'trigger',
-  'trigger-with-external-database',
-  'twenty',
-  'umami',
-  'unleash-with-postgresql',
-  'unleash-without-database',
-  'uptime-kuma',
-  'vaultwarden',
-  'vikunja',
-  'weblate',
-  'whoogle',
-  'wordpress-with-mariadb',
-  'wordpress-with-mysql',
-  'wordpress-without-database',
-] as const;
+// Service types list removed from schema to reduce token usage in MCP tool definitions.
+// The valid service types are documented in Coolify's API and should be referenced there.
+// Previously included: activepieces, appsmith, appwrite, authentik, n8n, wordpress-with-mysql, etc.
 
-const buildPackTypes = ['nixpacks', 'static', 'dockerfile', 'dockercompose'] as const;
-const proxyTypes = ['traefik', 'caddy', 'none'] as const;
-// Note: redirectTypes available for future use: ['www', 'non-www', 'both']
+// Build pack types: nixpacks, static, dockerfile, dockercompose
+// Proxy types: traefik, caddy, none
+// Redirect types: www, non-www, both
 
 // Common schemas
 const deleteOptionsSchema = {
@@ -138,7 +52,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_servers', 'List all Coolify servers', {}, async () => {
       const servers = await this.client.listServers();
-      return { content: [{ type: 'text', text: JSON.stringify(servers, null, 2) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(servers) }] };
     });
 
     this.tool(
@@ -149,7 +63,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const server = await this.client.getServer(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(server, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(server) }] };
       },
     );
 
@@ -165,11 +79,11 @@ export class CoolifyMcpServer extends McpServer {
         user: z.string().optional().describe('SSH user (default root)'),
         is_build_server: z.boolean().optional(),
         instant_validate: z.boolean().optional(),
-        proxy_type: z.enum(proxyTypes).optional(),
+        proxy_type: z.string().describe('Proxy type: traefik, caddy, or none').optional(),
       },
       async (args) => {
         const result = await this.client.createServer(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -185,12 +99,12 @@ export class CoolifyMcpServer extends McpServer {
         user: z.string().optional(),
         private_key_uuid: z.string().optional(),
         is_build_server: z.boolean().optional(),
-        proxy_type: z.enum(proxyTypes).optional(),
+        proxy_type: z.string().describe('Proxy type: traefik, caddy, or none').optional(),
       },
       async (args) => {
         const { uuid, ...data } = args;
         const result = await this.client.updateServer(uuid, data);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -202,7 +116,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.deleteServer(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -214,7 +128,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const resources = await this.client.getServerResources(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(resources, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(resources) }] };
       },
     );
 
@@ -226,7 +140,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const domains = await this.client.getServerDomains(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(domains, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(domains) }] };
       },
     );
 
@@ -238,7 +152,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const validation = await this.client.validateServer(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(validation, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(validation) }] };
       },
     );
 
@@ -246,7 +160,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_projects', 'List all Coolify projects', {}, async () => {
       const projects = await this.client.listProjects();
-      return { content: [{ type: 'text', text: JSON.stringify(projects, null, 2) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(projects) }] };
     });
 
     this.tool(
@@ -257,7 +171,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const project = await this.client.getProject(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(project, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(project) }] };
       },
     );
 
@@ -270,7 +184,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createProject(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -285,7 +199,7 @@ export class CoolifyMcpServer extends McpServer {
       async (args) => {
         const { uuid, ...data } = args;
         const result = await this.client.updateProject(uuid, data);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -297,7 +211,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.deleteProject(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -313,7 +227,7 @@ export class CoolifyMcpServer extends McpServer {
           args.project_uuid,
           args.environment_name_or_uuid,
         );
-        return { content: [{ type: 'text', text: JSON.stringify(env, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(env) }] };
       },
     );
 
@@ -325,7 +239,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const envs = await this.client.listProjectEnvironments(args.project_uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(envs, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(envs) }] };
       },
     );
 
@@ -340,7 +254,7 @@ export class CoolifyMcpServer extends McpServer {
         const result = await this.client.createProjectEnvironment(args.project_uuid, {
           name: args.name,
         });
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -356,7 +270,7 @@ export class CoolifyMcpServer extends McpServer {
           args.project_uuid,
           args.environment_name_or_uuid,
         );
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -364,7 +278,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_applications', 'List all applications', {}, async () => {
       const apps = await this.client.listApplications();
-      return { content: [{ type: 'text', text: JSON.stringify(apps, null, 2) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(apps) }] };
     });
 
     this.tool(
@@ -375,7 +289,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const app = await this.client.getApplication(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(app, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(app) }] };
       },
     );
 
@@ -387,7 +301,7 @@ export class CoolifyMcpServer extends McpServer {
         server_uuid: z.string(),
         git_repository: z.string().describe('Public git repository URL'),
         git_branch: z.string(),
-        build_pack: z.enum(buildPackTypes),
+        build_pack: z.string().describe('Build pack type: nixpacks, static, dockerfile, or dockercompose'),
         ports_exposes: z.string().describe('Ports to expose (e.g., "3000")'),
         environment_name: z.string().optional(),
         environment_uuid: z.string().optional(),
@@ -399,7 +313,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createPublicApplication(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -412,7 +326,7 @@ export class CoolifyMcpServer extends McpServer {
         github_app_uuid: z.string(),
         git_repository: z.string(),
         git_branch: z.string(),
-        build_pack: z.enum(buildPackTypes),
+        build_pack: z.string().describe('Build pack type: nixpacks, static, dockerfile, or dockercompose'),
         ports_exposes: z.string(),
         environment_name: z.string().optional(),
         environment_uuid: z.string().optional(),
@@ -422,7 +336,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createPrivateGHAppApplication(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -435,7 +349,7 @@ export class CoolifyMcpServer extends McpServer {
         private_key_uuid: z.string(),
         git_repository: z.string(),
         git_branch: z.string(),
-        build_pack: z.enum(buildPackTypes),
+        build_pack: z.string().describe('Build pack type: nixpacks, static, dockerfile, or dockercompose'),
         ports_exposes: z.string(),
         environment_name: z.string().optional(),
         environment_uuid: z.string().optional(),
@@ -445,7 +359,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createPrivateDeployKeyApplication(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -466,7 +380,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createDockerfileApplication(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -488,7 +402,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createDockerImageApplication(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -507,7 +421,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createDockerComposeApplication(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -521,7 +435,7 @@ export class CoolifyMcpServer extends McpServer {
         domains: z.string().optional(),
         git_repository: z.string().optional(),
         git_branch: z.string().optional(),
-        build_pack: z.enum(buildPackTypes).optional(),
+        build_pack: z.string().describe('Build pack type: nixpacks, static, dockerfile, or dockercompose').optional(),
         install_command: z.string().optional(),
         build_command: z.string().optional(),
         start_command: z.string().optional(),
@@ -536,7 +450,7 @@ export class CoolifyMcpServer extends McpServer {
         const { uuid, domains, ...rest } = args;
         const data = { ...rest, fqdn: domains };
         const result = await this.client.updateApplication(uuid, data);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -553,7 +467,7 @@ export class CoolifyMcpServer extends McpServer {
       async (args) => {
         const { uuid, ...options } = args;
         const result = await this.client.deleteApplication(uuid, options);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -568,7 +482,7 @@ export class CoolifyMcpServer extends McpServer {
       async (args) => {
         const { uuid, ...options } = args;
         const result = await this.client.startApplication(uuid, options);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -580,7 +494,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.stopApplication(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -592,7 +506,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.restartApplication(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -604,7 +518,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.deployApplication(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -616,7 +530,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const logs = await this.client.getApplicationLogs(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(logs, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(logs) }] };
       },
     );
 
@@ -629,7 +543,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.executeApplicationCommand(args.uuid, args.command);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -643,7 +557,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const envs = await this.client.listApplicationEnvs(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(envs, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(envs) }] };
       },
     );
 
@@ -657,7 +571,7 @@ export class CoolifyMcpServer extends McpServer {
       async (args) => {
         const { uuid, ...data } = args;
         const result = await this.client.createApplicationEnv(uuid, data);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -671,7 +585,7 @@ export class CoolifyMcpServer extends McpServer {
       async (args) => {
         const { uuid, ...data } = args;
         const result = await this.client.updateApplicationEnv(uuid, data);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -684,7 +598,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.bulkUpdateApplicationEnvs(args.uuid, { data: args.data });
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -697,7 +611,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.deleteApplicationEnv(args.uuid, args.env_uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -705,7 +619,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_databases', 'List all databases', {}, async () => {
       const databases = await this.client.listDatabases();
-      return { content: [{ type: 'text', text: JSON.stringify(databases, null, 2) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(databases) }] };
     });
 
     this.tool(
@@ -716,7 +630,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const database = await this.client.getDatabase(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(database, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(database) }] };
       },
     );
 
@@ -729,7 +643,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.updateDatabase(args.uuid, args.data);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -742,7 +656,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.deleteDatabase(args.uuid, args.options);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -772,7 +686,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createPostgresDatabase(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -788,7 +702,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createMySQLDatabase(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -804,7 +718,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createMariaDBDatabase(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -819,7 +733,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createMongoDBDatabase(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -832,7 +746,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createRedisDatabase(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -845,7 +759,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createKeyDBDatabase(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -859,7 +773,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createClickhouseDatabase(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -872,7 +786,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createDragonflyDatabase(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -885,7 +799,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.startDatabase(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -897,7 +811,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.stopDatabase(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -909,7 +823,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.restartDatabase(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -922,7 +836,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const backups = await this.client.listDatabaseBackups(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(backups, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(backups) }] };
       },
     );
 
@@ -940,7 +854,7 @@ export class CoolifyMcpServer extends McpServer {
       async (args) => {
         const { uuid, ...data } = args;
         const result = await this.client.createDatabaseBackup(uuid, data);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -959,7 +873,7 @@ export class CoolifyMcpServer extends McpServer {
       async (args) => {
         const { uuid, backup_uuid, ...data } = args;
         const result = await this.client.updateDatabaseBackup(uuid, backup_uuid, data);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -972,7 +886,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.deleteDatabaseBackup(args.uuid, args.backup_uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -985,7 +899,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const executions = await this.client.listBackupExecutions(args.uuid, args.backup_uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(executions, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(executions) }] };
       },
     );
 
@@ -1003,7 +917,7 @@ export class CoolifyMcpServer extends McpServer {
           args.backup_uuid,
           args.execution_uuid,
         );
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1011,7 +925,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_services', 'List all one-click services', {}, async () => {
       const services = await this.client.listServices();
-      return { content: [{ type: 'text', text: JSON.stringify(services, null, 2) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(services) }] };
     });
 
     this.tool(
@@ -1022,7 +936,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const service = await this.client.getService(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(service, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(service) }] };
       },
     );
 
@@ -1031,8 +945,8 @@ export class CoolifyMcpServer extends McpServer {
       'Create a one-click service (e.g., penpot, n8n, wordpress)',
       {
         type: z
-          .enum(serviceTypes)
-          .describe('Service type (e.g., penpot, n8n, wordpress-with-mysql)'),
+          .string()
+          .describe('Service type - must be a valid Coolify service type (e.g., penpot, n8n, wordpress-with-mysql, activepieces, appwrite, etc.). See Coolify documentation for full list.'),
         project_uuid: z.string(),
         server_uuid: z.string(),
         name: z.string().optional(),
@@ -1044,7 +958,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createService(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1061,7 +975,7 @@ export class CoolifyMcpServer extends McpServer {
       async (args) => {
         const { uuid, ...data } = args;
         const result = await this.client.updateService(uuid, data);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1074,7 +988,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.deleteService(args.uuid, args.options);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1086,7 +1000,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.startService(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1098,7 +1012,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.stopService(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1110,7 +1024,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.restartService(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1124,7 +1038,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const envs = await this.client.listServiceEnvs(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(envs, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(envs) }] };
       },
     );
 
@@ -1138,7 +1052,7 @@ export class CoolifyMcpServer extends McpServer {
       async (args) => {
         const { uuid, ...data } = args;
         const result = await this.client.createServiceEnv(uuid, data);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1152,7 +1066,7 @@ export class CoolifyMcpServer extends McpServer {
       async (args) => {
         const { uuid, ...data } = args;
         const result = await this.client.updateServiceEnv(uuid, data);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1165,7 +1079,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.bulkUpdateServiceEnvs(args.uuid, { data: args.data });
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1178,7 +1092,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.deleteServiceEnv(args.uuid, args.env_uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1186,7 +1100,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_private_keys', 'List all private keys', {}, async () => {
       const keys = await this.client.listPrivateKeys();
-      return { content: [{ type: 'text', text: JSON.stringify(keys, null, 2) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(keys) }] };
     });
 
     this.tool(
@@ -1197,7 +1111,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const key = await this.client.getPrivateKey(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(key, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(key) }] };
       },
     );
 
@@ -1211,7 +1125,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createPrivateKey(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1223,7 +1137,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.deletePrivateKey(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1237,7 +1151,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.updatePrivateKey(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1245,7 +1159,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_github_apps', 'List all GitHub Apps', {}, async () => {
       const apps = await this.client.listGitHubApps();
-      return { content: [{ type: 'text', text: JSON.stringify(apps, null, 2) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(apps) }] };
     });
 
     this.tool(
@@ -1264,7 +1178,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.createGitHubApp(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1286,7 +1200,7 @@ export class CoolifyMcpServer extends McpServer {
       async (args) => {
         const { id, ...data } = args;
         const result = await this.client.updateGitHubApp(id, data);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1298,7 +1212,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.deleteGitHubApp(args.id);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1413,7 +1327,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.cancelDeployment(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1427,7 +1341,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const result = await this.client.deploy(args);
-        return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(result) }] };
       },
     );
 
@@ -1435,7 +1349,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_resources', 'List all resources', {}, async () => {
       const resources = await this.client.listResources();
-      return { content: [{ type: 'text', text: JSON.stringify(resources, null, 2) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(resources) }] };
     });
 
     this.tool('get_version', 'Get Coolify version', {}, async () => {
@@ -1450,12 +1364,12 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('enable_api', 'Enable the Coolify API', {}, async () => {
       const result = await this.client.enableApi();
-      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(result) }] };
     });
 
     this.tool('disable_api', 'Disable the Coolify API', {}, async () => {
       const result = await this.client.disableApi();
-      return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(result) }] };
     });
   }
 
