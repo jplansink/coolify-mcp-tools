@@ -19,6 +19,24 @@ function sanitizeOutput(data: unknown): unknown {
   return data;
 }
 
+function slimServer(server: unknown): unknown {
+  if (!server || typeof server !== 'object') return server;
+  const { settings: _s, sentinel_token: _t, ...rest } = server as Record<string, unknown>;
+  return rest;
+}
+
+function slimForList(item: unknown): unknown {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return item;
+  const { docker_compose_raw: _r, docker_compose: _c, custom_labels: _l, ...rest } =
+    item as Record<string, unknown>;
+  if (rest.server) rest.server = slimServer(rest.server);
+  if (rest.destination && typeof rest.destination === 'object') {
+    const dest = rest.destination as Record<string, unknown>;
+    if (dest.server) rest.destination = { ...dest, server: slimServer(dest.server) };
+  }
+  return rest;
+}
+
 function validateCommand(command: string): void {
   if (/[;&|`$><\\]/.test(command)) {
     throw new Error('Command contains unsupported characters');
@@ -71,7 +89,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_servers', 'List all Coolify servers', {}, async () => {
       const servers = await this.client.listServers();
-      return { content: [{ type: 'text', text: JSON.stringify(servers) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(Array.isArray(servers) ? servers.map(slimForList) : servers)) }] };
     });
 
     this.tool(
@@ -148,7 +166,7 @@ export class CoolifyMcpServer extends McpServer {
       },
       async (args) => {
         const resources = await this.client.getServerResources(args.uuid);
-        return { content: [{ type: 'text', text: JSON.stringify(resources) }] };
+        return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(Array.isArray(resources) ? resources.map(slimForList) : resources)) }] };
       },
     );
 
@@ -300,7 +318,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_applications', 'List all applications', {}, async () => {
       const apps = await this.client.listApplications();
-      return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(apps)) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(Array.isArray(apps) ? apps.map(slimForList) : apps)) }] };
     });
 
     this.tool(
@@ -643,7 +661,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_databases', 'List all databases', {}, async () => {
       const databases = await this.client.listDatabases();
-      return { content: [{ type: 'text', text: JSON.stringify(databases) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(Array.isArray(databases) ? databases.map(slimForList) : databases)) }] };
     });
 
     this.tool(
@@ -950,7 +968,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_services', 'List all one-click services', {}, async () => {
       const services = await this.client.listServices();
-      return { content: [{ type: 'text', text: JSON.stringify(services) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(Array.isArray(services) ? services.map(slimForList) : services)) }] };
     });
 
     this.tool(
@@ -1320,7 +1338,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_deployments', 'List currently running deployments', {}, async () => {
       const deployments = await this.client.listDeployments();
-      return { content: [{ type: 'text', text: JSON.stringify(deployments, null, 2) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(Array.isArray(deployments) ? deployments.map(slimForList) : deployments)) }] };
     });
 
     this.tool(
@@ -1377,7 +1395,7 @@ export class CoolifyMcpServer extends McpServer {
 
     this.tool('list_resources', 'List all resources', {}, async () => {
       const resources = await this.client.listResources();
-      return { content: [{ type: 'text', text: JSON.stringify(resources) }] };
+      return { content: [{ type: 'text', text: JSON.stringify(sanitizeOutput(Array.isArray(resources) ? resources.map(slimForList) : resources)) }] };
     });
 
     this.tool('get_version', 'Get Coolify version', {}, async () => {
